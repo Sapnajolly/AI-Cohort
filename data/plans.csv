@@ -1,0 +1,10 @@
+plan_id,plan_name,plan_type,monthly_premium,deductible,out_of_pocket_max,copay_primary_care,copay_specialist,coinsurance_pct,effective_date
+PLN-001,Bronze Basic HMO,HMO,312.50,6000,8500,35,70,40,2026-01-01
+PLN-002,Silver Standard PPO,PPO,465.00,3500,7000,25,55,30,2026-01-01
+PLN-003,Gold Preferred PPO,PPO,612.75,1500,5000,15,40,20,2026-01-01
+PLN-004,Platinum Complete EPO,EPO,780.00,500,3000,10,25,10,2026-01-01
+PLN-005,Bronze Basic HMO,HMO,312.50,6000,8500,35,70,40,2026-01-01
+PLN-006,Silver Plus PPO,PPO,invalid,4000,7500,25,50,30,2026-01-01
+PLN-007,Catastrophic Care EPO,EPO,198.00,9000,9200,,,50,2026-03-01
+PLN-008,Gold Choice HMO,HMO,588.20,1800,5200,20,45,20,2026-01-01
+PLN-001,Bronze Basic HMO,HMO,312.50,6000,8500,35,70,40,2026-01-01
