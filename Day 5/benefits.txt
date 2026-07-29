@@ -1,0 +1,55 @@
+HORIZON COMMUNITY HEALTH PLAN
+Summary of Benefits and Coverage (SBC)
+Plan Name: Horizon Community PPO Gold 1500
+Group Number: HCH-88291
+Plan Year: January 1, 2026 - December 31, 2026
+This is a synthetic sample document generated for training purposes only. It does not represent a real
+insurance product or real member data.
+Section 1: Plan Overview
+The Horizon Community PPO Gold 1500 plan provides comprehensive medical, prescription drug, and
+preventive care coverage for members and their eligible dependents. This plan uses a preferred
+provider organization (PPO) network. Members may see any provider, but out-of-pocket costs are
+lower when using in-network providers.
+Cost Sharing In-Network Out-of-Network
+Annual Deductible (Individual) $1,500 $3,000
+Annual Deductible (Family) $3,000 $6,000
+Out-of-Pocket Maximum (Individual) $6,000 $12,000
+Out-of-Pocket Maximum (Family) $12,000 $24,000
+Primary Care Visit $25 copay 40% coinsurance
+Specialist Visit $50 copay 40% coinsurance
+Emergency Room $250 copay $250 copay
+Generic Drugs (Tier 1) $10 copay Not covered
+Preferred Brand Drugs (Tier 2) $40 copay Not covered
+Section 2: Covered Services
+The following services are covered under this plan when medically necessary and provided by an
+in-network provider, unless otherwise noted. Prior authorization may be required for certain services
+including inpatient hospital admissions, advanced imaging (MRI, CT, PET scans), and durable medical
+equipment over $500 in value.
+- Preventive care and screenings (no cost share when in-network)
+- Outpatient surgery and observation care
+- Inpatient hospital stays, including maternity
+- Mental health and substance use disorder services
+- Rehabilitative and habilitative services (physical, occupational, speech therapy)
+- Skilled nursing facility care, up to 60 days per plan year
+- Home health care, up to 100 visits per plan year
+- Durable medical equipment (DME)
+- Diagnostic lab and imaging services
+Section 3: Exclusions and Limitations
+This plan does not cover cosmetic surgery unless medically necessary, long-term custodial care,
+infertility treatments beyond diagnostic workup, or services provided outside the United States except in
+a documented emergency. Weight loss surgery requires a 6-month physician-supervised program prior
+to authorization.
+Section 4: Filing a Claim
+In-network providers will file claims on your behalf. If you receive care from an out-of-network provider,
+you must submit a claim form within 90 days of the date of service. Claim forms are available on the
+member portal at www.horizoncommunityhealth-sample.org/claims. Mail completed forms to: Horizon
+Community Health Plan, PO Box 44210, Trenton, NJ 08650.
+Section 5: Appeals Process
+If a claim is denied, members have the right to file an internal appeal within 180 days of receiving the
+denial notice. Horizon Community Health Plan will respond to standard appeals within 30 calendar days
+and expedited appeals within 72 hours. If the internal appeal is denied, members may request an
+independent external review through the state Department of Insurance.
+Section 6: Member Services Contact
+Phone: 1-800-555-0199 (Mon-Fri, 8am-6pm ET)
+Email: memberservices@horizoncommunityhealth-sample.org
+This document is a synthetic training artifact and contains no real member, provider, or claims data.

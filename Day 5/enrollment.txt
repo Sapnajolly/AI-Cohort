@@ -1,0 +1,24 @@
+HORIZON COMMUNITY HEALTH PLAN
+New Member Enrollment Form
+Form HCH-ENR-01 I Synthetic sample document - no real member data
+SECTION 1: EMPLOYEE INFORMATION
+Full Legal Name: Jordan T. Whitfield
+Date of Birth: 04/12/1987
+Social Security Number: XXX-XX-4471
+Employer Name: Ridgeline Manufacturing Co.
+Employee ID: RM-20481
+Home Address: 218 Maple Grove Lane, Ewing, NJ 08628
+Home Phone: (609) 555-0142
+Email Address: jwhitfield@example-mail.com
+SECTION 2: PLAN SELECTION
+[X] PPO Gold 1500 [ ] PPO Silver 2500 [ ] HDHP Bronze 4000
+Coverage Tier: [ ] Employee Only [ X] Employee + Spouse [ ] Family
+Requested Effective Date: 03/01/2026
+SECTION 3: DEPENDENT INFORMATION
+Name Relationship Date of Birth
+Alicia M. Whitfield Spouse 09/23/1989
+SECTION 4: AUTHORIZATION
+I certify that the information provided on this enrollment form is true and complete. I understand
+that providing false information may result in denial or termination of coverage under the terms
+of the group health plan.
+Employee Signature: Date:

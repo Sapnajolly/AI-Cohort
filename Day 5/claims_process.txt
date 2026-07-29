@@ -1,0 +1,22 @@
+HORIZON COMMUNITY HEALTH PLAN
+Member Medical Claim Form
+This is a synthetic sample form created for training purposes only. It contains no real member or PHI data.
+Section 1: Member Information
+Section 2: Provider Information
+Section 3: Service Details
+Section 4: Member Certification
+I certify that the information provided above is accurate and complete to the best of my knowledge. I understand that submitting false information on this claim form may result in denial of the claim and possible termination of coverage under the terms of the plan.
+Member Signature: ____________________________ Date: _______________
+Section 5: Submission Instructions
+Mail the completed form and itemized receipts to: Horizon Community Health Plan, PO Box 44210, Trenton, NJ 08650. Claims must be submitted within 90 days of the date of service. For questions, call Member Services at 1-800-555-0199.
+Member Name: |
+Member ID Number: |
+Group Number: | HCH-88291
+Date of Birth: |
+Mailing Address: |
+Phone Number: |
+Provider Name: |
+Provider NPI Number: |
+Provider Address: |
+In-Network? (Y/N): |
+Date of Service | Description of Service | Diagnosis Code (ICD-10) | Billed Amount
