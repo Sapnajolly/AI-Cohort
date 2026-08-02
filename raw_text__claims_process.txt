@@ -1,0 +1,59 @@
+CLAIMS PROCESS GUIDE
+Synthetic Coverage Corp — Plan Year 2026
+(Synthetic sample document. No real member or plan data.)
+
+## Claims Process
+
+For in-network care, your provider will typically file the claim on your
+behalf, and you do not need to submit anything yourself. The provider
+submits the claim electronically to the plan, which adjudicates it against
+your benefit design, applies any deductible, copay, or coinsurance, and
+issues an Explanation of Benefits (EOB) to you within 10 business days of
+processing.
+
+For out-of-network care, or in the rare case an in-network provider does
+not file on your behalf, you must submit a claim form along with an
+itemized bill within 180 days of the date of service. Claim forms are
+available on the member portal or by calling member services. Late
+submissions beyond the 180-day window may be denied for timely filing.
+
+Once a claim is received, it moves through three stages: intake and
+eligibility verification, medical necessity and benefit adjudication, and
+payment or denial determination. Most clean claims (those with no missing
+information) are processed within 15 business days. Claims requiring
+additional medical records or prior authorization confirmation can take
+up to 30 business days.
+
+If a claim is denied, the EOB will include a denial reason code and a
+plain-language explanation. Common denial reasons include: service not
+covered under the plan, missing prior authorization, provider out of
+network without emergency justification, duplicate claim already paid,
+or insufficient documentation of medical necessity.
+
+## Appeals
+
+Members have the right to appeal a denied claim within 180 days of the
+denial notice. A first-level internal appeal is reviewed by a plan medical
+director who was not involved in the original decision. Internal appeals
+are decided within 30 calendar days for standard appeals and 72 hours for
+urgent/expedited appeals involving an immediate health risk.
+
+If the internal appeal is also denied, members may request an external
+review by an independent review organization not affiliated with the plan.
+The external reviewer's decision is binding on the plan. Instructions for
+requesting an external review are included with every internal appeal
+denial letter.
+
+## Reimbursement and Payment
+
+Approved claims are paid directly to the provider for in-network services.
+For out-of-network claims submitted by the member, reimbursement is sent
+directly to the member via check or direct deposit, typically within 10
+business days of approval. Members are responsible for any remaining
+balance not covered by the plan, subject to balance-billing protections
+under applicable law for emergency and certain facility-based services.
+
+Overpayments identified after a claim has been paid may result in a
+recoupment request from the plan, typically applied against future claims
+rather than requiring a direct refund, unless the overpayment resulted
+from fraud or member ineligibility at the time of service.
