@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI Assistant Builder — Day 40</title>
+<style>
+  :root{--bg:#0b0e17;--card:#151a2a;--accent:#7c5cff;--accent2:#22d3ee;--text:#e7e9f5;--muted:#8b91ab;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:radial-gradient(circle at 20% 10%,#1b1f33,var(--bg) 60%);color:var(--text);min-height:100vh;}
+  .wrap{max-width:900px;margin:0 auto;padding:28px 18px 80px;}
+  h1{font-size:26px;margin:0 0 4px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--muted);margin-bottom:20px;}
+  .card{background:var(--card);border:1px solid #262c47;border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+  label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px;}
+  input[type=text],textarea,select{width:100%;background:#0f1424;border:1px solid #333a5c;color:var(--text);border-radius:8px;padding:10px 12px;font-size:14px;}
+  textarea{resize:vertical;min-height:60px;}
+  .btn{background:linear-gradient(90deg,var(--accent),var(--accent2));border:none;color:#0b0e17;font-weight:700;padding:11px 22px;border-radius:10px;cursor:pointer;font-size:14px;margin-top:16px;}
+  .btn.secondary{background:#232945;color:var(--text);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .step{display:none;}
+  .step.active{display:block;}
+  .progress{display:flex;gap:6px;margin-bottom:20px;}
+  .progress div{flex:1;height:6px;border-radius:4px;background:#232945;}
+  .progress div.done{background:linear-gradient(90deg,var(--accent),var(--accent2));}
+  pre{background:#0f1424;border:1px solid #262c47;border-radius:10px;padding:14px;font-size:12px;white-space:pre-wrap;color:#c7cbe0;max-height:260px;overflow-y:auto;}
+  .chatwrap{display:flex;flex-direction:column;height:420px;}
+  .messages{flex:1;overflow-y:auto;padding:10px;background:#0f1424;border-radius:10px;border:1px solid #262c47;margin-bottom:10px;}
+  .msg{margin-bottom:12px;padding:10px 14px;border-radius:10px;max-width:80%;font-size:14px;line-height:1.5;}
+  .msg.user{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#0b0e17;margin-left:auto;}
+  .msg.assistant{background:#1e2440;border:1px solid #333a5c;}
+  .inputrow{display:flex;gap:8px;}
+  .inputrow input{flex:1;}
+  .badge{display:inline-block;padding:2px 10px;border-radius:6px;background:#232945;font-size:11px;margin-left:8px;}
+  .note{font-size:12px;color:var(--muted);margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>AI Assistant Builder</h1>
+  <p class="sub">Design a purpose-built AI assistant: interview → system prompt → live interface connected to the Claude API.</p>
+
+  <div class="progress"><div id="p1"></div><div id="p2"></div><div id="p3"></div></div>
+
+  <div class="card step active" id="step1">
+    <h2 style="margin-top:0">Step 1 — Interview</h2>
+    <label>Domain / Niche</label>
+    <input type="text" id="domain" placeholder="e.g. Freelance photography business">
+    <label>Who are the users?</label>
+    <input type="text" id="users" placeholder="e.g. Prospective wedding clients">
+    <label>Desired outcome</label>
+    <input type="text" id="outcome" placeholder="e.g. Answer pricing questions and book a consultation">
+    <label>Tone / personality</label>
+    <select id="tone">
+      <option>Friendly and warm</option>
+      <option>Professional and concise</option>
+      <option>Playful and energetic</option>
+      <option>Calm and reassuring</option>
+    </select>
+    <label>Assistant name</label>
+    <input type="text" id="assistantName" placeholder="e.g. Aria">
+    <button class="btn" id="toStep2">Generate System Prompt →</button>
+  </div>
+
+  <div class="card step" id="step2">
+    <h2 style="margin-top:0">Step 2 — Production-Ready System Prompt</h2>
+    <pre id="promptOutput"></pre>
+    <button class="btn secondary" id="backTo1">← Back</button>
+    <button class="btn" id="toStep3">Build Interface →</button>
+  </div>
+
+  <div class="card step" id="step3">
+    <h2 style="margin-top:0">Step 3 — Live Assistant <span class="badge" id="nameBadge"></span></h2>
+    <label>Anthropic API key (used only in your browser, never stored)</label>
+    <input type="text" id="apiKey" placeholder="sk-ant-...">
+    <p class="note">This calls the Claude API directly from your browser using the system prompt generated above. Your key stays in memory for this session only.</p>
+    <div class="chatwrap" style="margin-top:14px">
+      <div class="messages" id="messages"></div>
+      <div class="inputrow">
+        <input type="text" id="chatInput" placeholder="Ask your assistant something...">
+        <button class="btn" id="sendBtn" style="margin-top:0">Send</button>
+      </div>
+    </div>
+    <button class="btn secondary" id="backTo2">← Back</button>
+  </div>
+</div>
+
+<script>
+const steps = ['step1','step2','step3'];
+let systemPrompt = '';
+
+function showStep(n){
+  steps.forEach((id,i)=>{
+    document.getElementById(id).classList.toggle('active', i===n);
+    document.getElementById('p'+(i+1)).classList.toggle('done', i<=n);
+  });
+}
+
+document.getElementById('toStep2').onclick = ()=>{
+  const domain = document.getElementById('domain').value.trim() || 'a general business';
+  const users = document.getElementById('users').value.trim() || 'website visitors';
+  const outcome = document.getElementById('outcome').value.trim() || 'get their questions answered';
+  const tone = document.getElementById('tone').value;
+  const name = document.getElementById('assistantName').value.trim() || 'Assistant';
+
+  systemPrompt = `You are ${name}, a purpose-built AI assistant for ${domain}.
+
+ROLE
+Your job is to help ${users} ${outcome}.
+
+TONE
+Communicate in a ${tone.toLowerCase()} tone at all times. Keep responses concise and easy to scan.
+
+GUIDELINES
+- Stay strictly within the scope of ${domain}. Politely redirect off-topic questions.
+- Never fabricate pricing, availability, or facts you don't have — ask a clarifying question instead.
+- Always work toward the outcome: ${outcome}.
+- If the user seems ready to take the next step, offer a clear call to action.
+- Keep answers short (2-4 sentences) unless the user asks for more detail.
+
+BOUNDARIES
+- Do not provide legal, medical, or financial advice outside ${domain}.
+- Do not claim to be human.
+- If you don't know something, say so honestly and offer to follow up.`;
+
+  document.getElementById('promptOutput').textContent = systemPrompt;
+  document.getElementById('nameBadge').textContent = name;
+  showStep(1);
+};
+
+document.getElementById('backTo1').onclick = ()=> showStep(0);
+document.getElementById('backTo2').onclick = ()=> showStep(1);
+document.getElementById('toStep3').onclick = ()=>{
+  showStep(2);
+  document.getElementById('messages').innerHTML = '';
+  addMsg('assistant', `Hi, I'm ${document.getElementById('nameBadge').textContent}. Add your Anthropic API key above, then ask me anything about ${document.getElementById('domain').value || 'this business'}.`);
+};
+
+function addMsg(role, text){
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  div.textContent = text;
+  const box = document.getElementById('messages');
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+let chatHistory = [];
+
+async function sendMessage(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  const apiKey = document.getElementById('apiKey').value.trim();
+  addMsg('user', text);
+  chatHistory.push({role:'user', content: text});
+  input.value = '';
+
+  if(!apiKey){
+    addMsg('assistant', 'Please add your Anthropic API key above to activate live responses. (This is a client-side demo — no key is sent anywhere except directly to the Anthropic API.)');
+    return;
+  }
+
+  addMsg('assistant', 'Thinking...');
+  const thinkingEl = document.getElementById('messages').lastChild;
+
+  try{
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-sonnet-20241022',
+        max_tokens: 400,
+        system: systemPrompt,
+        messages: chatHistory
+      })
+    });
+    const data = await resp.json();
+    thinkingEl.remove();
+    if(data.content && data.content[0]){
+      const reply = data.content[0].text;
+      addMsg('assistant', reply);
+      chatHistory.push({role:'assistant', content: reply});
+    } else {
+      addMsg('assistant', 'Error: ' + (data.error ? data.error.message : 'Unexpected response.'));
+    }
+  }catch(err){
+    thinkingEl.remove();
+    addMsg('assistant', 'Request failed: ' + err.message + ' (Browser CORS restrictions may block direct API calls — this demonstrates the intended architecture.)');
+  }
+}
+
+document.getElementById('sendBtn').onclick = sendMessage;
+document.getElementById('chatInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendMessage(); });
+</script>
+</body>
+</html>
