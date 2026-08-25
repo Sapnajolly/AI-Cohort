@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PDF Splitter & Merger — Day 39</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+  :root{--bg:#0b0e17;--card:#151a2a;--accent:#7c5cff;--accent2:#22d3ee;--text:#e7e9f5;--muted:#8b91ab;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:radial-gradient(circle at 20% 10%,#1b1f33,var(--bg) 60%);color:var(--text);min-height:100vh;}
+  .wrap{max-width:1000px;margin:0 auto;padding:28px 18px 80px;}
+  h1{font-size:26px;margin:0 0 4px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--muted);margin-bottom:20px;}
+  .tabs{display:flex;gap:10px;margin-bottom:18px;}
+  .tab{padding:10px 18px;border-radius:10px;background:#1e2440;border:1px solid #333a5c;cursor:pointer;font-weight:600;}
+  .tab.active{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#0b0e17;}
+  .card{background:var(--card);border:1px solid #262c47;border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+  .dropzone{border:2px dashed #3a4270;border-radius:14px;padding:40px 20px;text-align:center;color:var(--muted);cursor:pointer;transition:.2s;}
+  .dropzone.over{border-color:var(--accent2);background:#182036;}
+  input[type=file]{display:none;}
+  .filelist{margin-top:16px;display:flex;flex-direction:column;gap:8px;}
+  .fileitem{display:flex;align-items:center;justify-content:space-between;background:#12182b;border:1px solid #262c47;border-radius:10px;padding:10px 14px;font-size:14px;cursor:grab;}
+  .fileitem.dragging{opacity:.4;}
+  .fileitem b{color:var(--accent2);margin-right:8px;}
+  .fileitem .actions button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;margin-left:8px;}
+  .fileitem .actions button:hover{color:var(--text);}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0;}
+  select,input[type=text],input[type=number]{background:#0f1424;border:1px solid #333a5c;color:var(--text);border-radius:8px;padding:8px 10px;font-size:14px;}
+  .btn{background:linear-gradient(90deg,var(--accent),var(--accent2));border:none;color:#0b0e17;font-weight:700;padding:11px 22px;border-radius:10px;cursor:pointer;font-size:14px;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn.secondary{background:#232945;color:var(--text);}
+  .previewgrid{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
+  .pagethumb{width:90px;height:120px;border:1px solid #333a5c;border-radius:6px;background:#0f1424;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);position:relative;}
+  .pagethumb.selected{border-color:var(--accent2);box-shadow:0 0 0 2px var(--accent2);}
+  .log{margin-top:14px;padding:12px 16px;border-radius:10px;background:#101a30;border:1px solid #26406b;font-size:13px;color:var(--muted);white-space:pre-wrap;max-height:160px;overflow-y:auto;}
+  .status{font-size:13px;margin-top:10px;}
+  .status.ok{color:var(--accent2);}
+  .status.err{color:#ff6b6b;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>PDF Splitter & Merger</h1>
+  <p class="sub">A commercial-grade, browser-only PDF utility. All processing happens locally — nothing is uploaded.</p>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="split">Split PDF</div>
+    <div class="tab" data-tab="merge">Merge PDFs</div>
+  </div>
+
+  <div id="splitPanel" class="card">
+    <div class="dropzone" id="splitDrop">Drag & drop a PDF here, or click to choose a file</div>
+    <input type="file" id="splitInput" accept="application/pdf">
+    <div id="splitFileInfo" class="status"></div>
+
+    <div class="row" id="splitControls" style="display:none">
+      <label>Split mode:</label>
+      <select id="splitMode">
+        <option value="all">Every page as its own PDF</option>
+        <option value="range">Custom page range</option>
+        <option value="selected">Selected pages only</option>
+        <option value="every-n">Every N pages per file</option>
+      </select>
+      <input type="text" id="rangeInput" placeholder="e.g. 1-3,5,7-9" style="display:none">
+      <input type="number" id="nInput" placeholder="N" min="1" style="display:none;width:70px">
+      <button class="btn" id="doSplit">Split PDF</button>
+    </div>
+
+    <div class="previewgrid" id="pagePreview"></div>
+    <div class="log" id="splitLog" style="display:none"></div>
+  </div>
+
+  <div id="mergePanel" class="card" style="display:none">
+    <div class="dropzone" id="mergeDrop">Drag & drop multiple PDFs here, or click to choose files</div>
+    <input type="file" id="mergeInput" accept="application/pdf" multiple>
+    <div class="filelist" id="mergeFileList"></div>
+    <div class="row">
+      <button class="btn" id="doMerge" disabled>Merge PDFs</button>
+      <span style="color:var(--muted);font-size:13px">Drag files above to reorder before merging.</span>
+    </div>
+    <div class="log" id="mergeLog" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+const { PDFDocument } = PDFLib;
+
+// ---------- Tabs ----------
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick = ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('splitPanel').style.display = t.dataset.tab==='split' ? 'block':'none';
+    document.getElementById('mergePanel').style.display = t.dataset.tab==='merge' ? 'block':'none';
+  };
+});
+
+function log(id, msg){
+  const el = document.getElementById(id);
+  el.style.display='block';
+  el.textContent += msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+function downloadBytes(bytes, filename){
+  const blob = new Blob([bytes], {type:'application/pdf'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 5000);
+}
+
+// ---------- SPLIT ----------
+let splitDoc = null, splitBytes = null, splitPageCount = 0, selectedPages = new Set();
+
+const splitDrop = document.getElementById('splitDrop');
+const splitInput = document.getElementById('splitInput');
+splitDrop.onclick = ()=> splitInput.click();
+splitDrop.ondragover = e=>{ e.preventDefault(); splitDrop.classList.add('over'); };
+splitDrop.ondragleave = ()=> splitDrop.classList.remove('over');
+splitDrop.ondrop = e=>{ e.preventDefault(); splitDrop.classList.remove('over'); if(e.dataTransfer.files[0]) loadSplitFile(e.dataTransfer.files[0]); };
+splitInput.onchange = ()=> { if(splitInput.files[0]) loadSplitFile(splitInput.files[0]); };
+
+async function loadSplitFile(file){
+  const info = document.getElementById('splitFileInfo');
+  if(file.type !== 'application/pdf'){ info.className='status err'; info.textContent='Please select a valid PDF file.'; return; }
+  try{
+    splitBytes = await file.arrayBuffer();
+    splitDoc = await PDFDocument.load(splitBytes);
+    splitPageCount = splitDoc.getPageCount();
+    info.className='status ok';
+    info.textContent = `Loaded "${file.name}" — ${splitPageCount} page(s).`;
+    document.getElementById('splitControls').style.display='flex';
+    renderPagePreview();
+  }catch(err){
+    info.className='status err';
+    info.textContent = 'Failed to read PDF: ' + err.message;
+  }
+}
+
+function renderPagePreview(){
+  const grid = document.getElementById('pagePreview');
+  grid.innerHTML = '';
+  selectedPages.clear();
+  for(let i=0;i<splitPageCount;i++){
+    const div = document.createElement('div');
+    div.className='pagethumb';
+    div.textContent = 'Page ' + (i+1);
+    div.onclick = ()=>{
+      if(selectedPages.has(i)){ selectedPages.delete(i); div.classList.remove('selected'); }
+      else { selectedPages.add(i); div.classList.add('selected'); }
+    };
+    grid.appendChild(div);
+  }
+}
+
+document.getElementById('splitMode').onchange = (e)=>{
+  document.getElementById('rangeInput').style.display = e.target.value==='range' ? 'inline-block':'none';
+  document.getElementById('nInput').style.display = e.target.value==='every-n' ? 'inline-block':'none';
+};
+
+function parseRanges(str, max){
+  const out = new Set();
+  str.split(',').forEach(part=>{
+    part = part.trim();
+    if(!part) return;
+    if(part.includes('-')){
+      let [a,b] = part.split('-').map(n=>parseInt(n.trim(),10));
+      if(isNaN(a)) return;
+      if(isNaN(b)) b = a;
+      for(let i=a;i<=b && i<=max;i++) if(i>=1) out.add(i-1);
+    } else {
+      const n = parseInt(part,10);
+      if(!isNaN(n) && n>=1 && n<=max) out.add(n-1);
+    }
+  });
+  return Array.from(out).sort((a,b)=>a-b);
+}
+
+document.getElementById('doSplit').onclick = async ()=>{
+  if(!splitDoc) return;
+  const mode = document.getElementById('splitMode').value;
+  document.getElementById('splitLog').textContent='';
+  try{
+    if(mode==='all'){
+      for(let i=0;i<splitPageCount;i++){
+        const newDoc = await PDFDocument.create();
+        const [page] = await newDoc.copyPages(splitDoc, [i]);
+        newDoc.addPage(page);
+        const bytes = await newDoc.save();
+        downloadBytes(bytes, `page-${i+1}.pdf`);
+        log('splitLog', `Exported page ${i+1} of ${splitPageCount}.`);
+      }
+    } else if(mode==='range'){
+      const indices = parseRanges(document.getElementById('rangeInput').value, splitPageCount);
+      if(indices.length===0){ log('splitLog','No valid pages found in range.'); return; }
+      const newDoc = await PDFDocument.create();
+      const pages = await newDoc.copyPages(splitDoc, indices);
+      pages.forEach(p=>newDoc.addPage(p));
+      const bytes = await newDoc.save();
+      downloadBytes(bytes, `range-split.pdf`);
+      log('splitLog', `Exported ${indices.length} page(s) from range "${document.getElementById('rangeInput').value}".`);
+    } else if(mode==='selected'){
+      const indices = Array.from(selectedPages).sort((a,b)=>a-b);
+      if(indices.length===0){ log('splitLog','Select at least one page thumbnail above.'); return; }
+      const newDoc = await PDFDocument.create();
+      const pages = await newDoc.copyPages(splitDoc, indices);
+      pages.forEach(p=>newDoc.addPage(p));
+      const bytes = await newDoc.save();
+      downloadBytes(bytes, `selected-pages.pdf`);
+      log('splitLog', `Exported ${indices.length} selected page(s).`);
+    } else if(mode==='every-n'){
+      const n = parseInt(document.getElementById('nInput').value,10) || 1;
+      let fileIdx = 1;
+      for(let start=0; start<splitPageCount; start+=n){
+        const end = Math.min(start+n, splitPageCount);
+        const indices = [];
+        for(let i=start;i<end;i++) indices.push(i);
+        const newDoc = await PDFDocument.create();
+        const pages = await newDoc.copyPages(splitDoc, indices);
+        pages.forEach(p=>newDoc.addPage(p));
+        const bytes = await newDoc.save();
+        downloadBytes(bytes, `chunk-${fileIdx}.pdf`);
+        log('splitLog', `Exported chunk ${fileIdx} (pages ${start+1}-${end}).`);
+        fileIdx++;
+      }
+    }
+    log('splitLog', 'Split complete.');
+  }catch(err){
+    log('splitLog', 'Error: ' + err.message);
+  }
+};
+
+// ---------- MERGE ----------
+let mergeFiles = [];
+
+const mergeDrop = document.getElementById('mergeDrop');
+const mergeInput = document.getElementById('mergeInput');
+mergeDrop.onclick = ()=> mergeInput.click();
+mergeDrop.ondragover = e=>{ e.preventDefault(); mergeDrop.classList.add('over'); };
+mergeDrop.ondragleave = ()=> mergeDrop.classList.remove('over');
+mergeDrop.ondrop = e=>{ e.preventDefault(); mergeDrop.classList.remove('over'); addMergeFiles(Array.from(e.dataTransfer.files)); };
+mergeInput.onchange = ()=> addMergeFiles(Array.from(mergeInput.files));
+
+function addMergeFiles(files){
+  files.filter(f=>f.type==='application/pdf').forEach(f=> mergeFiles.push({file:f, id: Math.random().toString(36).slice(2)}));
+  renderMergeList();
+}
+
+function renderMergeList(){
+  const list = document.getElementById('mergeFileList');
+  list.innerHTML = '';
+  mergeFiles.forEach((entry, idx)=>{
+    const div = document.createElement('div');
+    div.className='fileitem';
+    div.draggable = true;
+    div.dataset.id = entry.id;
+    div.innerHTML = `<span><b>${idx+1}.</b>${entry.file.name}</span><span class="actions"><button data-act="remove">✕</button></span>`;
+    div.ondragstart = ()=> div.classList.add('dragging');
+    div.ondragend = ()=> div.classList.remove('dragging');
+    div.ondragover = e=>{
+      e.preventDefault();
+      const dragging = list.querySelector('.dragging');
+      if(dragging && dragging!==div){
+        const rect = div.getBoundingClientRect();
+        const after = (e.clientY - rect.top) > rect.height/2;
+        list.insertBefore(dragging, after ? div.nextSibling : div);
+      }
+    };
+    div.ondrop = ()=>{
+      const newOrder = Array.from(list.children).map(c=>c.dataset.id);
+      mergeFiles.sort((a,b)=> newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
+      renderMergeList();
+    };
+    div.querySelector('[data-act="remove"]').onclick = ()=>{
+      mergeFiles = mergeFiles.filter(e=>e.id!==entry.id);
+      renderMergeList();
+    };
+    list.appendChild(div);
+  });
+  document.getElementById('doMerge').disabled = mergeFiles.length < 2;
+}
+
+document.getElementById('doMerge').onclick = async ()=>{
+  document.getElementById('mergeLog').textContent='';
+  try{
+    const merged = await PDFDocument.create();
+    for(const entry of mergeFiles){
+      const bytes = await entry.file.arrayBuffer();
+      const doc = await PDFDocument.load(bytes);
+      const pages = await merged.copyPages(doc, doc.getPageIndices());
+      pages.forEach(p=>merged.addPage(p));
+      log('mergeLog', `Merged "${entry.file.name}" (${doc.getPageCount()} pages).`);
+    }
+    const bytes = await merged.save();
+    downloadBytes(bytes, 'merged.pdf');
+    log('mergeLog', `Merge complete — ${merged.getPageCount()} total pages. Downloaded as merged.pdf.`);
+  }catch(err){
+    log('mergeLog', 'Error: ' + err.message);
+  }
+};
+</script>
+</body>
+</html>
