@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Task Compass — Day 37</title>
+<style>
+  :root{--bg:#0b0e17;--card:#151a2a;--accent:#7c5cff;--accent2:#22d3ee;--text:#e7e9f5;--muted:#8b91ab;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:radial-gradient(circle at 20% 10%,#1b1f33,var(--bg) 60%);color:var(--text);min-height:100vh;}
+  .wrap{max-width:900px;margin:0 auto;padding:28px 18px 80px;}
+  h1{font-size:28px;margin:0 0 4px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--muted);margin-bottom:20px;}
+  .progress{display:flex;gap:8px;margin-bottom:24px;}
+  .progress div{flex:1;height:8px;border-radius:6px;background:#232945;overflow:hidden;}
+  .progress div span{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s;}
+  .card{background:var(--card);border:1px solid #262c47;border-radius:18px;padding:22px;margin-bottom:18px;backdrop-filter:blur(6px);box-shadow:0 10px 30px rgba(0,0,0,.35);animation:fade .4s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .task-ticket{background:linear-gradient(135deg,#1c2340,#171b2d);border-left:4px solid var(--accent2);padding:14px 18px;border-radius:10px;margin-bottom:18px;font-weight:600;}
+  .roles{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
+  .role{padding:10px 14px;border-radius:12px;background:#1e2440;border:1px solid #333a5c;cursor:grab;user-select:none;transition:transform .15s, box-shadow .15s;font-size:14px;}
+  .role:hover{transform:translateY(-3px);box-shadow:0 6px 16px rgba(124,92,255,.35);}
+  .role.dragging{opacity:.4;}
+  .slot{min-height:56px;border:2px dashed #3a4270;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--muted);margin-bottom:14px;transition:background .2s,border-color .2s;}
+  .slot.over{border-color:var(--accent2);background:#182036;}
+  .slot.filled{border-style:solid;border-color:var(--accent2);color:var(--text);font-weight:600;background:#16233a;}
+  .order-slots{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  .order-slots .slot{flex:1;min-width:110px;}
+  .btn{background:linear-gradient(90deg,var(--accent),var(--accent2));border:none;color:#0b0e17;font-weight:700;padding:12px 22px;border-radius:12px;cursor:pointer;font-size:15px;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn.secondary{background:#232945;color:var(--text);}
+  .reveal{margin-top:14px;padding:14px 16px;border-radius:12px;background:#101a30;border:1px solid #26406b;line-height:1.5;font-size:14px;}
+  .reveal b{color:var(--accent2);}
+  .depts{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+  .dept{padding:10px 14px;border-radius:12px;border:1px solid #333a5c;background:#1e2440;cursor:pointer;font-size:14px;}
+  .dept.selected{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#0b0e17;font-weight:700;}
+  .chart{display:flex;gap:18px;align-items:flex-end;height:160px;margin-top:16px;}
+  .bar{flex:1;background:linear-gradient(180deg,var(--accent2),var(--accent));border-radius:8px 8px 0 0;position:relative;transition:height .6s ease;}
+  .bar span{position:absolute;bottom:-24px;left:0;right:0;text-align:center;font-size:12px;color:var(--muted);}
+  .bar b{position:absolute;top:-22px;left:0;right:0;text-align:center;font-size:13px;}
+  .celebrate{text-align:center;font-size:20px;margin:14px 0;}
+  ul.insights li{margin-bottom:8px;}
+  .stage-label{display:inline-block;background:#232945;color:var(--accent2);padding:4px 10px;border-radius:8px;font-size:12px;letter-spacing:.5px;margin-bottom:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="setup" class="card">
+    <h1>Task Compass</h1>
+    <p class="sub">Learn how work flows through real organizations.</p>
+    <p>What type of workplace would you like to explore?</p>
+    <div class="roles" id="workplaceChoices"></div>
+  </div>
+
+  <div id="game" style="display:none">
+    <h1>Task Compass</h1>
+    <p class="sub">Learn how work flows through real organizations. Workplace: <b id="workplaceLabel"></b></p>
+    <div class="progress"><div><span id="p1"></span></div><div><span id="p2"></span></div><div><span id="p3"></span></div></div>
+    <div id="stageArea"></div>
+  </div>
+
+  <div id="final" class="card" style="display:none"></div>
+</div>
+
+<script>
+const WORKPLACES = {
+  "Tech Company": ["Frontend Developer","Backend Developer","QA Engineer","Product Manager","UX Designer","Customer Support","Engineering Manager","DevOps Engineer"],
+  "Startup": ["Founder","Growth Lead","Engineer","Designer","Support","Ops"],
+  "Corporate Office": ["Team Lead","Analyst","HR","IT Support","Finance","Ops Manager"],
+  "Cafe / Restaurant": ["Barista","Chef","Server","Manager","Supplier Liaison","Cleaner"],
+  "Retail Business": ["Store Associate","Store Manager","Inventory Lead","Marketing","Customer Service"],
+  "Hospital / Healthcare": ["Nurse","Doctor","Admin Staff","Lab Technician","Patient Support"],
+  "School / University": ["Teacher","Admin","Counselor","IT Support","Department Head"],
+  "Manufacturing": ["Line Worker","QA Inspector","Plant Manager","Logistics","Maintenance"],
+  "Media / Creative Agency": ["Copywriter","Designer","Account Manager","Producer","Editor"],
+  "Freelancer / Small Business": ["You (Owner)","Contractor","Accountant","Client Liaison"],
+};
+
+let roles = [];
+let scores = {Ownership:0, Delegation:0, Collaboration:0, "Workflow Thinking":0};
+let stage = 1;
+
+const setupEl = document.getElementById('setup');
+const choicesEl = document.getElementById('workplaceChoices');
+Object.keys(WORKPLACES).forEach(name=>{
+  const b = document.createElement('div');
+  b.className='role';
+  b.textContent = name;
+  b.onclick = ()=> startGame(name);
+  choicesEl.appendChild(b);
+});
+const otherBtn = document.createElement('div');
+otherBtn.className='role';
+otherBtn.textContent = 'Other';
+otherBtn.onclick = ()=> startGame('General Organization');
+choicesEl.appendChild(otherBtn);
+
+function startGame(name){
+  roles = WORKPLACES[name] || WORKPLACES["Tech Company"];
+  document.getElementById('workplaceLabel').textContent = name;
+  setupEl.style.display='none';
+  document.getElementById('game').style.display='block';
+  renderStage1();
+}
+
+function updateProgress(){
+  document.getElementById('p1').style.width = stage>=1 ? '100%':'0%';
+  document.getElementById('p2').style.width = stage>=2 ? '100%':'0%';
+  document.getElementById('p3').style.width = stage>=3 ? '100%':'0%';
+}
+
+// ---------- STAGE 1: Who owns this? ----------
+const S1_TASKS = [
+  {t:"A customer reports that payments fail only on iPhones.", owner:"QA Engineer", why:"They investigate and reproduce platform-specific bugs before routing a fix.", assist:["Backend Developer","Frontend Developer"]},
+  {t:"A user says the checkout button is misaligned on mobile.", owner:"Frontend Developer", why:"UI layout issues on a specific surface belong to whoever builds that surface.", assist:["UX Designer","QA Engineer"]},
+  {t:"Support keeps getting the same complaint about slow page loads.", owner:"Backend Developer", why:"Performance root causes usually live in server/query logic.", assist:["DevOps Engineer","QA Engineer"]},
+];
+
+function renderStage1(){
+  stage=1; updateProgress();
+  const area = document.getElementById('stageArea');
+  area.innerHTML = '';
+  let idx = 0; let s1score=0;
+  const card = document.createElement('div');
+  card.className='card';
+  area.appendChild(card);
+
+  function draw(){
+    if(idx>=S1_TASKS.length){ scores.Ownership += s1score; renderStage2(); return; }
+    const task = S1_TASKS[idx];
+    card.innerHTML = `<span class="stage-label">STAGE 1 · WHO OWNS THIS? (${idx+1}/${S1_TASKS.length})</span>
+      <div class="task-ticket">🎫 ${task.t}</div>
+      <div class="slot" id="ownerSlot">Drag a role here</div>
+      <div class="roles" id="roleBank"></div>
+      <div id="revealBox"></div>`;
+    const bank = card.querySelector('#roleBank');
+    roles.forEach(r=>{
+      const chip = document.createElement('div');
+      chip.className='role'; chip.textContent=r; chip.draggable=true;
+      chip.ondragstart = e=>{ e.dataTransfer.setData('text/plain', r); chip.classList.add('dragging'); };
+      chip.ondragend = ()=> chip.classList.remove('dragging');
+      chip.onclick = ()=> drop(r); // click fallback
+      bank.appendChild(chip);
+    });
+    const slot = card.querySelector('#ownerSlot');
+    slot.ondragover = e=>{ e.preventDefault(); slot.classList.add('over'); };
+    slot.ondragleave = ()=> slot.classList.remove('over');
+    slot.ondrop = e=>{ e.preventDefault(); drop(e.dataTransfer.getData('text/plain')); };
+
+    function drop(chosen){
+      if(slot.classList.contains('filled')) return;
+      slot.textContent = chosen; slot.classList.add('filled'); slot.classList.remove('over');
+      const correct = chosen === task.owner;
+      if(correct) s1score++;
+      document.getElementById('revealBox').innerHTML = `<div class="reveal">
+        <div>✓ <b>Primary Owner:</b> ${task.owner}</div>
+        <div>Why: ${task.why}</div>
+        <div>May assist: ${task.assist.join(', ')}</div>
+        <div style="margin-top:8px;color:${correct? '#22d3ee':'#ff8a8a'}">${correct? 'Nice — that matches the primary owner.' : 'You picked '+chosen+'. That role can help, but the primary owner is '+task.owner+'.'}</div>
+        <button class="btn" id="nextBtn" style="margin-top:12px">Next</button>
+      </div>`;
+      document.getElementById('nextBtn').onclick = ()=>{ idx++; draw(); };
+    }
+  }
+  draw();
+}
+
+// ---------- STAGE 2: Task routing ----------
+const S2_TASKS = [
+  {t:"A customer submits a bug report through chat.", correct:["Customer Support","QA Engineer","Backend Developer","Product Manager"]},
+  {t:"A client requests a new feature during a sales call.", correct:["Product Manager","Frontend Developer","QA Engineer"]},
+  {t:"An outage is reported at 2am.", correct:["DevOps Engineer","Backend Developer","Engineering Manager"]},
+];
+
+function renderStage2(){
+  stage=2; updateProgress();
+  const area = document.getElementById('stageArea');
+  area.innerHTML = '';
+  let idx=0; let s2score=0;
+  const card = document.createElement('div'); card.className='card'; area.appendChild(card);
+
+  function draw(){
+    if(idx>=S2_TASKS.length){ scores.Delegation += s2score; scores["Workflow Thinking"] += s2score; renderStage3(); return; }
+    const task = S2_TASKS[idx];
+    const chosen = [];
+    card.innerHTML = `<span class="stage-label">STAGE 2 · TASK ROUTING (${idx+1}/${S2_TASKS.length})</span>
+      <div class="task-ticket">🎫 ${task.t}</div>
+      <p class="sub">Click roles in the order the task should flow through the org.</p>
+      <div class="order-slots" id="orderSlots"></div>
+      <div class="roles" id="roleBank2"></div>
+      <button class="btn" id="submitOrder" disabled>Submit routing</button>
+      <div id="revealBox2"></div>`;
+    const orderSlots = card.querySelector('#orderSlots');
+    const bank = card.querySelector('#roleBank2');
+    roles.forEach(r=>{
+      const chip = document.createElement('div');
+      chip.className='role'; chip.textContent=r;
+      chip.onclick = ()=>{
+        if(chosen.includes(r) || chosen.length>=5) return;
+        chosen.push(r); renderSlots();
+      };
+      bank.appendChild(chip);
+    });
+    function renderSlots(){
+      orderSlots.innerHTML='';
+      chosen.forEach((r,i)=>{
+        const s=document.createElement('div'); s.className='slot filled'; s.textContent=(i+1)+'. '+r; orderSlots.appendChild(s);
+      });
+      for(let i=chosen.length;i<3;i++){
+        const s=document.createElement('div'); s.className='slot'; s.textContent='Step '+(i+1); orderSlots.appendChild(s);
+      }
+      card.querySelector('#submitOrder').disabled = chosen.length < 3;
+    }
+    renderSlots();
+    card.querySelector('#submitOrder').onclick = ()=>{
+      const overlap = chosen.filter(r=>task.correct.includes(r)).length;
+      const good = overlap >= Math.min(3, task.correct.length);
+      if(good) s2score++;
+      document.getElementById('revealBox2').innerHTML = `<div class="reveal">
+        <div>Suggested flow: <b>${task.correct.join(' → ')}</b></div>
+        <div style="margin-top:6px;">${good? 'Your routing lines up well with how this typically flows through an org.' : 'Your routing missed a step or two — real workflows usually pass through more checkpoints like this.'}</div>
+        <button class="btn" id="nextBtn2" style="margin-top:12px">Next</button>
+      </div>`;
+      document.getElementById('nextBtn2').onclick = ()=>{ idx++; draw(); };
+    };
+  }
+  draw();
+}
+
+// ---------- STAGE 3: Collaboration challenge ----------
+const S3_TASKS = [
+  {t:"Customer satisfaction suddenly drops.", primary:"Customer Support", support:["Product Manager","QA Engineer","Engineering Manager"]},
+  {t:"Sales increase dramatically overnight.", primary:"Engineering Manager", support:["DevOps Engineer","Backend Developer","Customer Support"]},
+  {t:"Negative reviews appear online.", primary:"Product Manager", support:["Customer Support","UX Designer","Engineering Manager"]},
+];
+
+function renderStage3(){
+  stage=3; updateProgress();
+  const area = document.getElementById('stageArea');
+  area.innerHTML='';
+  let idx=0; let s3score=0;
+  const card = document.createElement('div'); card.className='card'; area.appendChild(card);
+
+  function draw(){
+    if(idx>=S3_TASKS.length){ scores.Collaboration += s3score; showFinal(); return; }
+    const task = S3_TASKS[idx];
+    const picked = new Set();
+    card.innerHTML = `<span class="stage-label">STAGE 3 · COLLABORATION CHALLENGE (${idx+1}/${S3_TASKS.length})</span>
+      <div class="task-ticket">🎫 ${task.t}</div>
+      <p class="sub">Select up to 4 departments/roles that should be involved.</p>
+      <div class="depts" id="deptBank"></div>
+      <button class="btn" id="submitDept">Submit team</button>
+      <div id="revealBox3"></div>`;
+    const bank = card.querySelector('#deptBank');
+    roles.forEach(r=>{
+      const chip = document.createElement('div');
+      chip.className='dept'; chip.textContent=r;
+      chip.onclick = ()=>{
+        if(picked.has(r)) { picked.delete(r); chip.classList.remove('selected'); }
+        else if(picked.size<4){ picked.add(r); chip.classList.add('selected'); }
+      };
+      bank.appendChild(chip);
+    });
+    card.querySelector('#submitDept').onclick = ()=>{
+      const arr = Array.from(picked);
+      const overlap = arr.filter(r=>task.support.includes(r) || r===task.primary).length;
+      if(overlap>=2) s3score++;
+      document.getElementById('revealBox3').innerHTML = `<div class="reveal">
+        <div><b>Primary Owner:</b> ${task.primary}</div>
+        <div><b>Supporting Teams:</b> ${task.support.join(', ')}</div>
+        <div style="margin-top:6px;"><b>Reasoning:</b> Problems like this touch the customer experience, the product, and delivery — no single role can resolve it alone.</div>
+        <div><b>Communication flow:</b> ${task.primary} coordinates with ${task.support.join(' and ')} through a shared incident thread.</div>
+        <button class="btn" id="nextBtn3" style="margin-top:12px">Next</button>
+      </div>`;
+      document.getElementById('nextBtn3').onclick = ()=>{ idx++; draw(); };
+    };
+  }
+  draw();
+}
+
+function showFinal(){
+  document.getElementById('game').style.display='none';
+  const f = document.getElementById('final');
+  f.style.display='block';
+  const max = 3;
+  const cats = Object.keys(scores);
+  const barsHtml = cats.map(c=>{
+    const pct = Math.round((scores[c]/max)*100);
+    return `<div class="bar" style="height:${pct}%"><b>${scores[c]}/${max}</b><span>${c}</span></div>`;
+  }).join('');
+  f.innerHTML = `
+    <div class="celebrate">🎉 Task Compass complete!</div>
+    <h1 style="font-size:22px;">Your Organizational Thinking Report</h1>
+    <div class="chart">${barsHtml}</div>
+    <div class="reveal" style="margin-top:34px;">
+      <b>What you understood well:</b> You engaged with realistic, ambiguous workplace scenarios rather than memorized titles.<br><br>
+      <b>Where you may have over-assigned responsibility:</b> In Stage 1, single-owner tasks are sometimes given to a role that only assists.<br><br>
+      <b>Where you may have underestimated collaboration:</b> In Stage 3, complex org-wide problems often need more cross-functional input than any one selection captures.<br><br>
+      <b>One insight:</b> Many real workplace problems are solved by teams rather than individuals — ownership starts a task, but collaboration finishes it.
+    </div>
+    <button class="btn secondary" style="margin-top:18px" onclick="location.reload()">Replay with a different workplace</button>
+  `;
+}
+</script>
+</body>
+</html>
