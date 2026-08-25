@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Typing Speed Studio — Day 38</title>
+<style>
+  :root{--bg:#0b0e17;--card:#151a2a;--accent:#7c5cff;--accent2:#22d3ee;--text:#e7e9f5;--muted:#8b91ab;--good:#22d3ee;--bad:#ff6b6b;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:radial-gradient(circle at 20% 10%,#1b1f33,var(--bg) 60%);color:var(--text);min-height:100vh;}
+  .wrap{max-width:960px;margin:0 auto;padding:28px 18px 80px;}
+  h1{font-size:26px;margin:0 0 4px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{color:var(--muted);margin-bottom:20px;}
+  .card{background:var(--card);border:1px solid #262c47;border-radius:16px;padding:22px;margin-bottom:18px;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+  .row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+  .chip{padding:9px 14px;border-radius:10px;background:#1e2440;border:1px solid #333a5c;cursor:pointer;font-size:14px;transition:.15s;}
+  .chip.selected{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#0b0e17;font-weight:700;}
+  .stats{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+  .stat{background:#12182b;border:1px solid #262c47;border-radius:12px;padding:10px 16px;min-width:100px;text-align:center;}
+  .stat b{display:block;font-size:22px;color:var(--accent2);}
+  .stat span{font-size:11px;color:var(--muted);text-transform:uppercase;}
+  #textDisplay{font-size:20px;line-height:1.8;letter-spacing:.5px;padding:16px;border-radius:12px;background:#0f1424;border:1px solid #262c47;user-select:none;}
+  #textDisplay span.correct{color:var(--good);}
+  #textDisplay span.incorrect{color:var(--bad);text-decoration:underline;}
+  #textDisplay span.current{background:var(--accent);color:#0b0e17;border-radius:3px;}
+  textarea#inputArea{width:100%;margin-top:14px;padding:12px;border-radius:10px;background:#0f1424;border:1px solid #333a5c;color:var(--text);font-size:16px;resize:none;height:70px;}
+  .btn{background:linear-gradient(90deg,var(--accent),var(--accent2));border:none;color:#0b0e17;font-weight:700;padding:11px 20px;border-radius:10px;cursor:pointer;font-size:14px;margin-top:12px;}
+  .btn.secondary{background:#232945;color:var(--text);}
+  .bar{height:8px;border-radius:6px;background:#232945;overflow:hidden;margin-bottom:10px;}
+  .bar span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .2s;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{text-align:left;padding:8px;border-bottom:1px solid #262c47;}
+  th{color:var(--muted);font-weight:600;}
+  .badge{padding:2px 8px;border-radius:6px;font-size:11px;background:#232945;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Typing Speed Studio</h1>
+  <p class="sub">A commercial-grade typing practice platform. Choose a category and mode, then start typing.</p>
+
+  <div class="card">
+    <div class="row" id="categoryRow"></div>
+    <div class="row" id="modeRow"></div>
+    <button class="btn" id="startBtn">Start Session</button>
+  </div>
+
+  <div class="card" id="sessionCard" style="display:none">
+    <div class="stats">
+      <div class="stat"><b id="statWpm">0</b><span>WPM</span></div>
+      <div class="stat"><b id="statAcc">100%</b><span>Accuracy</span></div>
+      <div class="stat"><b id="statTime">0s</b><span>Time</span></div>
+      <div class="stat"><b id="statErr">0</b><span>Errors</span></div>
+    </div>
+    <div class="bar"><span id="progressBar"></span></div>
+    <div id="textDisplay"></div>
+    <textarea id="inputArea" placeholder="Start typing here..." autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+    <button class="btn secondary" id="restartBtn">Restart Session</button>
+  </div>
+
+  <div class="card" id="resultCard" style="display:none"></div>
+
+  <div class="card">
+    <h2 style="font-size:18px;margin-top:0;">Session History</h2>
+    <table>
+      <thead><tr><th>#</th><th>Category</th><th>Mode</th><th>WPM</th><th>Accuracy</th><th>Time</th><th>Replay</th></tr></thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = {
+  "Everyday Words": "the quick brown fox jumps over the lazy dog while the sun sets slowly behind the distant mountains and birds fly home before nightfall arrives across the quiet valley",
+  "Tech & Code": "javascript functions return values while python classes define objects and databases store structured records inside tables that applications query through efficient indexed searches",
+  "Business": "quarterly revenue increased significantly after the marketing team launched a targeted campaign that improved customer retention and boosted overall satisfaction across every regional office",
+  "Quotes": "success is not final failure is not fatal it is the courage to continue that counts and every great achievement begins with the decision to try despite uncertainty"
+};
+const MODES = ["Standard","Time Attack (30s)","Zen (no timer)"];
+
+let selectedCategory = null, selectedMode = null;
+let sessionText = "", startTime = null, timerInterval = null, finished = false;
+let history = [];
+
+const catRow = document.getElementById('categoryRow');
+Object.keys(CATEGORIES).forEach(c=>{
+  const chip = document.createElement('div');
+  chip.className='chip'; chip.textContent=c;
+  chip.onclick=()=>{ selectedCategory=c; Array.from(catRow.children).forEach(x=>x.classList.remove('selected')); chip.classList.add('selected'); };
+  catRow.appendChild(chip);
+});
+const modeRow = document.getElementById('modeRow');
+MODES.forEach(m=>{
+  const chip = document.createElement('div');
+  chip.className='chip'; chip.textContent=m;
+  chip.onclick=()=>{ selectedMode=m; Array.from(modeRow.children).forEach(x=>x.classList.remove('selected')); chip.classList.add('selected'); };
+  modeRow.appendChild(chip);
+});
+
+document.getElementById('startBtn').onclick = ()=>{
+  if(!selectedCategory){ selectedCategory = Object.keys(CATEGORIES)[0]; catRow.children[0].classList.add('selected'); }
+  if(!selectedMode){ selectedMode = MODES[0]; modeRow.children[0].classList.add('selected'); }
+  startSession();
+};
+document.getElementById('restartBtn').onclick = startSession;
+
+function startSession(){
+  sessionText = CATEGORIES[selectedCategory];
+  finished = false;
+  startTime = null;
+  clearInterval(timerInterval);
+  document.getElementById('sessionCard').style.display='block';
+  document.getElementById('resultCard').style.display='none';
+  document.getElementById('statWpm').textContent='0';
+  document.getElementById('statAcc').textContent='100%';
+  document.getElementById('statTime').textContent='0s';
+  document.getElementById('statErr').textContent='0';
+  document.getElementById('progressBar').style.width='0%';
+  renderText(0);
+  const input = document.getElementById('inputArea');
+  input.value = '';
+  input.disabled = false;
+  input.focus();
+  input.oninput = onType;
+}
+
+function renderText(pos){
+  const el = document.getElementById('textDisplay');
+  const typed = document.getElementById('inputArea').value;
+  el.innerHTML = sessionText.split('').map((ch,i)=>{
+    let cls='';
+    if(i < typed.length){ cls = typed[i]===ch ? 'correct' : 'incorrect'; }
+    else if(i === typed.length){ cls='current'; }
+    return `<span class="${cls}">${ch===' '?'&nbsp;':ch}</span>`;
+  }).join('');
+}
+
+function onType(){
+  const input = document.getElementById('inputArea');
+  const typed = input.value;
+  if(!startTime){
+    startTime = Date.now();
+    timerInterval = setInterval(updateStats, 250);
+  }
+  renderText(typed.length);
+  let errors=0;
+  for(let i=0;i<typed.length;i++){ if(typed[i]!==sessionText[i]) errors++; }
+  document.getElementById('statErr').textContent = errors;
+  document.getElementById('progressBar').style.width = Math.min(100, (typed.length/sessionText.length)*100)+'%';
+
+  const timeLimit = selectedMode==="Time Attack (30s)" ? 30 : Infinity;
+  const elapsed = (Date.now()-startTime)/1000;
+  if(typed.length >= sessionText.length || elapsed >= timeLimit){
+    finishSession(errors);
+  }
+}
+
+function updateStats(){
+  if(!startTime || finished) return;
+  const elapsed = (Date.now()-startTime)/1000;
+  document.getElementById('statTime').textContent = Math.round(elapsed)+'s';
+  const typed = document.getElementById('inputArea').value;
+  const wpm = elapsed>0 ? Math.round((typed.length/5)/(elapsed/60)) : 0;
+  document.getElementById('statWpm').textContent = wpm;
+  let errors=0;
+  for(let i=0;i<typed.length;i++){ if(typed[i]!==sessionText[i]) errors++; }
+  const acc = typed.length>0 ? Math.round(((typed.length-errors)/typed.length)*100) : 100;
+  document.getElementById('statAcc').textContent = acc+'%';
+
+  if(selectedMode==="Time Attack (30s)" && elapsed >= 30){
+    finishSession(errors);
+  }
+}
+
+function finishSession(errors){
+  if(finished) return;
+  finished = true;
+  clearInterval(timerInterval);
+  const input = document.getElementById('inputArea');
+  input.disabled = true;
+  const typed = input.value;
+  const elapsed = Math.max(0.1, (Date.now()-startTime)/1000);
+  const wpm = Math.round((typed.length/5)/(elapsed/60));
+  const acc = typed.length>0 ? Math.round(((typed.length-errors)/typed.length)*100) : 100;
+
+  const record = { n: history.length+1, category: selectedCategory, mode: selectedMode, wpm, acc, time: Math.round(elapsed)+'s' };
+  history.push(record);
+  renderHistory();
+
+  const card = document.getElementById('resultCard');
+  card.style.display='block';
+  card.innerHTML = `
+    <h2 style="margin-top:0;">Session Complete <span class="badge">${selectedCategory} · ${selectedMode}</span></h2>
+    <div class="stats">
+      <div class="stat"><b>${wpm}</b><span>WPM</span></div>
+      <div class="stat"><b>${acc}%</b><span>Accuracy</span></div>
+      <div class="stat"><b>${errors}</b><span>Errors</span></div>
+      <div class="stat"><b>${Math.round(elapsed)}s</b><span>Time</span></div>
+    </div>
+    <p style="color:var(--muted)">${acc>=95 ? 'Excellent precision — your accuracy is elite tier.' : acc>=85 ? 'Solid accuracy — a little more care will push you higher.' : 'Focus on accuracy first; speed follows naturally once errors drop.'}</p>
+    <button class="btn secondary" onclick="startSession()">Try Again</button>
+  `;
+}
+
+function renderHistory(){
+  const body = document.getElementById('historyBody');
+  body.innerHTML = history.slice().reverse().map(r=>`
+    <tr>
+      <td>${r.n}</td><td>${r.category}</td><td>${r.mode}</td><td>${r.wpm}</td><td>${r.acc}%</td><td>${r.time}</td>
+      <td><button class="btn secondary" style="margin:0;padding:5px 10px;font-size:12px" onclick="replaySession('${r.category.replace(/'/g,"\\'")}','${r.mode.replace(/'/g,"\\'")}')">Replay</button></td>
+    </tr>`).join('');
+}
+
+function replaySession(cat, mode){
+  selectedCategory = cat; selectedMode = mode;
+  Array.from(catRow.children).forEach(x=>x.classList.toggle('selected', x.textContent===cat));
+  Array.from(modeRow.children).forEach(x=>x.classList.toggle('selected', x.textContent===mode));
+  startSession();
+  window.scrollTo({top: document.getElementById('sessionCard').offsetTop-20, behavior:'smooth'});
+}
+</script>
+</body>
+</html>
