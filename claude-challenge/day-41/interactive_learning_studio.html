@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Interactive Learning Studio — Python OOP</title>
+<style>
+  :root{--bg:#0b0e17;--card:#151a2a;--accent:#7c5cff;--accent2:#22d3ee;--text:#e7e9f5;--muted:#8b91ab;--good:#22d3ee;--bad:#ff6b6b;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI',system-ui,sans-serif;background:radial-gradient(circle at 20% 10%,#1b1f33,var(--bg) 60%);color:var(--text);min-height:100vh;}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 18px 100px;}
+  h1{font-size:28px;margin:0 0 4px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  h2{font-size:20px;margin-top:0;}
+  h3{font-size:16px;color:var(--accent2);}
+  .sub{color:var(--muted);margin-bottom:18px;}
+  .card{background:var(--card);border:1px solid #262c47;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 10px 30px rgba(0,0,0,.35);}
+  .pill{display:inline-block;padding:4px 12px;border-radius:8px;background:#232945;font-size:12px;margin:2px 6px 2px 0;color:var(--muted);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr;}}
+  .stat{background:#12182b;border:1px solid #262c47;border-radius:12px;padding:12px 16px;}
+  .stat b{display:block;font-size:20px;color:var(--accent2);}
+  .stat span{font-size:12px;color:var(--muted);}
+  .progressbar{height:8px;border-radius:6px;background:#232945;overflow:hidden;margin:16px 0;}
+  .progressbar span{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s;}
+  .navdots{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+  .navdot{padding:8px 14px;border-radius:8px;background:#1e2440;border:1px solid #333a5c;font-size:13px;cursor:pointer;}
+  .navdot.active{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#0b0e17;font-weight:700;}
+  .navdot.locked{opacity:.4;cursor:not-allowed;}
+  .module{display:none;}
+  .module.active{display:block;}
+  pre{background:#0f1424;border:1px solid #262c47;border-radius:10px;padding:14px;font-size:13px;overflow-x:auto;color:#c7cbe0;}
+  code{color:var(--accent2);}
+  .diagram{background:#0f1424;border:1px solid #262c47;border-radius:12px;padding:16px;margin:14px 0;}
+  .analogy{background:#101a30;border-left:3px solid var(--accent2);padding:12px 16px;border-radius:8px;margin:14px 0;font-size:14px;}
+  .misconception{background:#2a1414;border-left:3px solid var(--bad);padding:12px 16px;border-radius:8px;margin:14px 0;font-size:14px;}
+  .takeaways li{margin-bottom:6px;}
+  .exercise{background:#0f1424;border:1px solid #333a5c;border-radius:10px;padding:16px;margin:14px 0;}
+  textarea.exans{width:100%;background:#12182b;border:1px solid #333a5c;color:var(--text);border-radius:8px;padding:10px;font-family:monospace;font-size:13px;min-height:70px;}
+  .btn{background:linear-gradient(90deg,var(--accent),var(--accent2));border:none;color:#0b0e17;font-weight:700;padding:11px 22px;border-radius:10px;cursor:pointer;font-size:14px;margin-top:12px;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn.secondary{background:#232945;color:var(--text);}
+  .quiz-q{margin-bottom:18px;}
+  .quiz-opts div{padding:10px 14px;border-radius:8px;background:#1e2440;border:1px solid #333a5c;margin-bottom:8px;cursor:pointer;font-size:14px;}
+  .quiz-opts div.selected{border-color:var(--accent2);}
+  .quiz-opts div.correct{background:#123a2e;border-color:var(--good);}
+  .quiz-opts div.incorrect{background:#3a1414;border-color:var(--bad);}
+  .quiz-explain{font-size:13px;color:var(--muted);margin-top:6px;padding:8px 12px;background:#0f1424;border-radius:8px;display:none;}
+  .quiz-result{padding:16px;border-radius:12px;background:#101a30;border:1px solid #26406b;margin-top:14px;}
+  ul{padding-left:20px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0;}
+  th,td{text-align:left;padding:8px;border-bottom:1px solid #262c47;}
+  .footer-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:640px){.footer-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Interactive Learning Studio</h1>
+  <p class="sub">Topic: <b>Python — Object-Oriented Programming</b> · A complete, self-paced interactive tutorial.</p>
+
+  <div class="card" id="introCard">
+    <h2>Welcome & Learning Objectives</h2>
+    <div class="grid2">
+      <div class="stat"><b>~90 min</b><span>Estimated completion time</span></div>
+      <div class="stat"><b>4</b><span>Progressive modules</span></div>
+      <div class="stat"><b>Basic Python</b><span>Prerequisite</span></div>
+      <div class="stat"><b id="rewardStat">0 / 16</b><span>Mastery points earned</span></div>
+    </div>
+    <h3 style="margin-top:20px">By the end of this tutorial you will be able to:</h3>
+    <ul>
+      <li>Define classes and instantiate objects with attributes and methods</li>
+      <li>Apply encapsulation, inheritance, and polymorphism correctly</li>
+      <li>Use dunder methods to make custom classes behave like built-ins</li>
+      <li>Design small object-oriented systems using composition and abstraction</li>
+    </ul>
+    <p><b>Reward system:</b> each module quiz can earn up to 4 mastery points (one per question). Score 3+ per module to unlock the next one. Track your total at the top of the page.</p>
+    <div class="progressbar"><span id="overallProgress"></span></div>
+    <button class="btn" id="beginBtn">Begin Module 1 →</button>
+  </div>
+
+  <div class="navdots" id="navdots" style="display:none"></div>
+  <div id="modulesRoot"></div>
+
+  <div class="card" id="finalCard" style="display:none">
+    <h2>🎉 Final Practical Challenge</h2>
+    <div class="exercise">
+      <p><b>Challenge:</b> Design a small class hierarchy for a library system. Create a base class <code>LibraryItem</code> with a <code>__str__</code> method, then two subclasses <code>Book</code> and <code>DVD</code> that override a <code>describe()</code> method differently (polymorphism). Add a <code>checkout()</code> method that encapsulates an <code>is_available</code> flag.</p>
+      <textarea class="exans" placeholder="Write your class hierarchy here..."></textarea>
+      <p style="color:var(--muted);font-size:13px;margin-top:8px">There's no auto-grader for this one — the goal is applying everything from Modules 1-4 in one design. Compare your solution against the cheat sheet below.</p>
+    </div>
+
+    <h2>Cheat Sheet</h2>
+    <table>
+      <tr><th>Concept</th><th>Syntax</th></tr>
+      <tr><td>Define a class</td><td><code>class Dog:</code></td></tr>
+      <tr><td>Constructor</td><td><code>def __init__(self, name):</code></td></tr>
+      <tr><td>Instance attribute</td><td><code>self.name = name</code></td></tr>
+      <tr><td>Inheritance</td><td><code>class Puppy(Dog):</code></td></tr>
+      <tr><td>Call parent method</td><td><code>super().__init__(name)</code></td></tr>
+      <tr><td>Private-ish attribute</td><td><code>self._name</code> or <code>self.__name</code></td></tr>
+      <tr><td>String representation</td><td><code>def __str__(self):</code></td></tr>
+      <tr><td>Equality</td><td><code>def __eq__(self, other):</code></td></tr>
+      <tr><td>Class method</td><td><code>@classmethod</code></td></tr>
+      <tr><td>Static method</td><td><code>@staticmethod</code></td></tr>
+    </table>
+
+    <h2>Summary Notes</h2>
+    <ul>
+      <li>Classes bundle data (attributes) and behavior (methods) together.</li>
+      <li>Encapsulation hides internal state behind a controlled interface.</li>
+      <li>Inheritance lets subclasses reuse and extend parent behavior.</li>
+      <li>Polymorphism lets different classes respond to the same method call in their own way.</li>
+      <li>Dunder methods let custom objects integrate with Python's built-in syntax (printing, equality, operators).</li>
+    </ul>
+
+    <h2>Continue Learning</h2>
+    <div class="footer-grid">
+      <div>
+        <h3>Books</h3>
+        <ul><li>"Fluent Python" — Luciano Ramalho</li><li>"Python Object-Oriented Programming" — Dusty Phillips</li></ul>
+        <h3>Documentation</h3>
+        <ul><li>docs.python.org/3/tutorial/classes.html</li></ul>
+        <h3>Research / Deep Dives</h3>
+        <ul><li>Python Data Model (docs.python.org/3/reference/datamodel.html)</li></ul>
+      </div>
+      <div>
+        <h3>Communities</h3>
+        <ul><li>r/learnpython</li><li>Python Discord</li></ul>
+        <h3>Practice Platforms</h3>
+        <ul><li>Exercism (Python track)</li><li>LeetCode OOP-tagged problems</li></ul>
+        <h3>Search Keywords</h3>
+        <ul><li>"python oop best practices"</li><li>"python dunder methods explained"</li></ul>
+        <h3>AI Prompts to Go Further</h3>
+        <ul><li>"Explain Python multiple inheritance and the MRO with an example"</li><li>"Give me 5 OOP design exercises with increasing difficulty"</li></ul>
+      </div>
+    </div>
+    <button class="btn secondary" id="printBtn">Print Notes</button>
+  </div>
+</div>
+
+<script>
+const TOTAL_MODULES = 4;
+let unlocked = 1;
+let scores = {1:0,2:0,3:0,4:0};
+
+const MODULES = [
+{
+  title: "Module 1 — Classes & Objects (Foundations)",
+  explanation: "A class is a blueprint for creating objects. It bundles related data (attributes) and behavior (methods) into one reusable definition. An object is a specific instance created from that blueprint — each with its own attribute values.",
+  example: `class Dog:
+    def __init__(self, name, breed):
+        self.name = name
+        self.breed = breed
+
+    def bark(self):
+        return f"{self.name} says Woof!"
+
+rex = Dog("Rex", "Labrador")
+print(rex.bark())  # Rex says Woof!`,
+  analogy: "Think of a class like a cookie cutter and objects like the cookies it produces. The cutter (class) defines the shape; every cookie (object) made from it shares that shape but can have its own toppings (attribute values).",
+  diagram: `<svg viewBox="0 0 400 120" width="100%" height="120">
+    <rect x="10" y="20" width="110" height="70" rx="8" fill="#1e2440" stroke="#7c5cff"/>
+    <text x="65" y="55" fill="#e7e9f5" font-size="12" text-anchor="middle">class Dog</text>
+    <text x="65" y="72" fill="#8b91ab" font-size="10" text-anchor="middle">(blueprint)</text>
+    <line x1="120" y1="55" x2="170" y2="55" stroke="#22d3ee" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="180" y="10" width="90" height="45" rx="8" fill="#123a2e" stroke="#22d3ee"/>
+    <text x="225" y="37" fill="#e7e9f5" font-size="11" text-anchor="middle">rex object</text>
+    <rect x="180" y="65" width="90" height="45" rx="8" fill="#123a2e" stroke="#22d3ee"/>
+    <text x="225" y="92" fill="#e7e9f5" font-size="11" text-anchor="middle">buddy object</text>
+    <defs><marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#22d3ee"/></marker></defs>
+  </svg>`,
+  comparison: "Unlike a plain dictionary (which just stores data), a class can also define behavior (methods) that operates on that data — keeping related logic together instead of scattered across functions.",
+  exercise: "Write a class `Car` with attributes `make` and `model`, and a method `honk()` that returns a string. Create two Car instances and call honk() on each.",
+  misconception: "Misconception: \"A class and an object are the same thing.\" In reality, a class is the definition; an object is a concrete instance created from it. You can create many objects from one class.",
+  takeaways: ["Classes define structure + behavior together.", "Objects are instances with their own attribute values.", "`__init__` runs automatically when an object is created.", "`self` refers to the specific instance being operated on."],
+  quiz: [
+    {q:"What does a class primarily define?", opts:["A single value","A blueprint for objects","A loop","A file path"], correct:1, explain:"A class defines the structure and behavior that its instances (objects) will share."},
+    {q:"What is `self` inside a method?", opts:["The class name","A global variable","The specific instance calling the method","A Python keyword for loops"], correct:2, explain:"`self` refers to the instance the method was called on, letting you access its attributes."},
+    {q:"When does `__init__` run?", opts:["Never automatically","When the class is defined","When an object is created from the class","Only when called manually"], correct:2, explain:"`__init__` is the constructor — Python calls it automatically when you instantiate a class."},
+    {q:"Two Dog objects can have...", opts:["Identical attribute values only","Different attribute values, same methods","Different methods, same class","No attributes at all"], correct:1, explain:"Each object has its own attribute values, but they share the methods defined on the class."}
+  ]
+},
+{
+  title: "Module 2 — Encapsulation (Practical Application)",
+  explanation: "Encapsulation means bundling data with the methods that operate on it, and restricting direct access to some of an object's components. Python uses naming conventions (`_protected`, `__private`) rather than strict access modifiers, relying on discipline plus optional property-based control.",
+  example: `class BankAccount:
+    def __init__(self, balance=0):
+        self._balance = balance  # convention: "protected"
+
+    def deposit(self, amount):
+        if amount > 0:
+            self._balance += amount
+
+    @property
+    def balance(self):
+        return self._balance
+
+acc = BankAccount(100)
+acc.deposit(50)
+print(acc.balance)  # 150 — read-only access via property`,
+  analogy: "Encapsulation is like a vending machine: you interact with buttons (the public interface) without touching the internal wiring (private implementation). You can't reach in and rearrange the mechanism directly.",
+  diagram: `<svg viewBox="0 0 400 120" width="100%" height="120">
+    <rect x="150" y="10" width="120" height="100" rx="10" fill="#1e2440" stroke="#7c5cff"/>
+    <text x="210" y="35" fill="#e7e9f5" font-size="11" text-anchor="middle">_balance</text>
+    <text x="210" y="55" fill="#8b91ab" font-size="9" text-anchor="middle">(internal state)</text>
+    <rect x="20" y="45" width="100" height="30" rx="15" fill="#123a2e" stroke="#22d3ee"/>
+    <text x="70" y="65" fill="#e7e9f5" font-size="11" text-anchor="middle">deposit()</text>
+    <line x1="120" y1="60" x2="150" y2="60" stroke="#22d3ee" stroke-width="2"/>
+  </svg>`,
+  comparison: "Compare to a public attribute with no protection: anyone could set `acc.balance = -9999` directly. Encapsulation via methods/properties lets you validate changes before they happen.",
+  exercise: "Extend `BankAccount` with a `withdraw(amount)` method that refuses to let `_balance` go negative, returning a message instead of raising an error.",
+  misconception: "Misconception: \"Python has true private variables like Java's `private` keyword.\" In reality, `__name` triggers name-mangling (renamed internally to `_ClassName__name`), but it's still accessible — Python relies on convention and trust, not enforcement.",
+  takeaways: ["Encapsulation controls how internal state is accessed and changed.", "Use `_name` as a convention for 'internal use'.", "`@property` lets you expose controlled read/write access.", "Validation logic belongs inside methods, not scattered in caller code."],
+  quiz: [
+    {q:"What is the main purpose of encapsulation?", opts:["Making code run faster","Controlling access to internal state","Deleting unused variables","Converting types automatically"], correct:1, explain:"Encapsulation restricts and controls how an object's internal data is accessed or modified."},
+    {q:"In Python, `_balance` (single underscore) means:", opts:["Strictly private, unreachable","A convention meaning 'internal use'","A syntax error","A constant"], correct:1, explain:"It's a naming convention signaling 'internal use' — Python does not enforce it."},
+    {q:"What does `@property` let you do?", opts:["Make a method act like an attribute","Delete a class","Import a module","Create a loop"], correct:0, explain:"`@property` exposes a method so it can be accessed like a plain attribute, enabling controlled access."},
+    {q:"Why not expose `_balance` directly for writing?", opts:["Python forbids it","It would let external code bypass validation","It uses more memory","It breaks inheritance"], correct:1, explain:"Direct write access skips any validation logic your methods would otherwise enforce."}
+  ]
+},
+{
+  title: "Module 3 — Inheritance & Polymorphism (Application)",
+  explanation: "Inheritance lets a class (subclass) reuse and extend the behavior of another class (superclass). Polymorphism lets different subclasses respond to the same method call in their own specific way, enabling flexible, interchangeable code.",
+  example: `class Animal:
+    def __init__(self, name):
+        self.name = name
+    def speak(self):
+        return f"{self.name} makes a sound"
+
+class Cat(Animal):
+    def speak(self):
+        return f"{self.name} says Meow"
+
+class Cow(Animal):
+    def speak(self):
+        return f"{self.name} says Moo"
+
+for a in [Cat("Whiskers"), Cow("Bessie")]:
+    print(a.speak())  # each responds differently`,
+  analogy: "Inheritance is like a family recipe passed down: children start with the base recipe (parent class) but can tweak ingredients (override methods) to make their own version. Polymorphism is everyone in the family being asked to 'cook dinner' — each produces a different dish, but you call the same instruction.",
+  diagram: `<svg viewBox="0 0 400 130" width="100%" height="130">
+    <rect x="150" y="10" width="100" height="35" rx="8" fill="#1e2440" stroke="#7c5cff"/>
+    <text x="200" y="32" fill="#e7e9f5" font-size="11" text-anchor="middle">Animal</text>
+    <line x1="200" y1="45" x2="90" y2="80" stroke="#22d3ee" stroke-width="2"/>
+    <line x1="200" y1="45" x2="310" y2="80" stroke="#22d3ee" stroke-width="2"/>
+    <rect x="40" y="80" width="100" height="35" rx="8" fill="#123a2e" stroke="#22d3ee"/>
+    <text x="90" y="102" fill="#e7e9f5" font-size="11" text-anchor="middle">Cat</text>
+    <rect x="260" y="80" width="100" height="35" rx="8" fill="#123a2e" stroke="#22d3ee"/>
+    <text x="310" y="102" fill="#e7e9f5" font-size="11" text-anchor="middle">Cow</text>
+  </svg>`,
+  comparison: "Without inheritance, Cat and Cow would each redefine `__init__` and `name` from scratch — duplicated code. With inheritance, shared logic lives once in `Animal`, and only the differing behavior (`speak`) is overridden.",
+  exercise: "Create a base class `Shape` with a method `area()` returning 0. Create `Rectangle(Shape)` and `Circle(Shape)` that override `area()` correctly. Loop over a list of both and print each area.",
+  misconception: "Misconception: \"Overriding a method deletes the parent's version entirely.\" In reality, you can still call the parent's implementation explicitly with `super().method()` — override doesn't erase, it shadows unless you choose to call the original too.",
+  takeaways: ["Inheritance promotes code reuse via `class Child(Parent):`.", "Override a method by redefining it in the subclass.", "`super()` lets you call the parent's version when needed.", "Polymorphism means the same method call produces type-appropriate behavior."],
+  quiz: [
+    {q:"What does `class Cat(Animal):` mean?", opts:["Cat imports Animal","Cat inherits from Animal","Cat deletes Animal","Cat is unrelated to Animal"], correct:1, explain:"The parentheses specify the parent class — Cat inherits Animal's attributes and methods."},
+    {q:"What is polymorphism most closely associated with?", opts:["Same method call, different behavior per class","Hiding all attributes","Deleting unused classes","Converting strings to numbers"], correct:0, explain:"Polymorphism lets different classes respond to an identical method call in their own way."},
+    {q:"What does `super().__init__(name)` do?", opts:["Creates a new unrelated class","Calls the parent class's constructor","Deletes the constructor","Skips initialization entirely"], correct:1, explain:"`super()` gives access to the parent class so you can reuse its constructor or methods."},
+    {q:"Why use inheritance instead of copy-pasting code into each class?", opts:["It runs faster","It avoids duplicated logic and centralizes shared behavior","It's required by Python syntax","It disables polymorphism"], correct:1, explain:"Inheritance keeps shared logic in one place, reducing duplication and easing maintenance."}
+  ]
+},
+{
+  title: "Module 4 — Dunder Methods & Design Mastery",
+  explanation: "Dunder ('double underscore') methods like `__str__`, `__eq__`, and `__len__` let your custom classes integrate naturally with Python's built-in syntax — printing, comparisons, iteration, and operators — instead of requiring special-case functions.",
+  example: `class Point:
+    def __init__(self, x, y):
+        self.x, self.y = x, y
+    def __str__(self):
+        return f"Point({self.x}, {self.y})"
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+    def __add__(self, other):
+        return Point(self.x + other.x, self.y + other.y)
+
+p1, p2 = Point(1,2), Point(3,4)
+print(p1 + p2)       # Point(4, 6)
+print(p1 == Point(1,2))  # True`,
+  analogy: "Dunder methods are like plugging your custom appliance into a house's standard electrical socket. Once it fits the standard interface (print, ==, +), it works seamlessly with all the tools built around that standard.",
+  diagram: `<svg viewBox="0 0 400 110" width="100%" height="110">
+    <rect x="20" y="35" width="110" height="40" rx="8" fill="#1e2440" stroke="#7c5cff"/>
+    <text x="75" y="59" fill="#e7e9f5" font-size="11" text-anchor="middle">print(obj)</text>
+    <line x1="130" y1="55" x2="180" y2="55" stroke="#22d3ee" stroke-width="2"/>
+    <rect x="180" y="20" width="90" height="70" rx="8" fill="#123a2e" stroke="#22d3ee"/>
+    <text x="225" y="50" fill="#e7e9f5" font-size="11" text-anchor="middle">__str__</text>
+    <text x="225" y="68" fill="#8b91ab" font-size="9" text-anchor="middle">returns text</text>
+    <line x1="270" y1="55" x2="320" y2="55" stroke="#22d3ee" stroke-width="2"/>
+    <rect x="320" y="35" width="60" height="40" rx="8" fill="#1e2440" stroke="#7c5cff"/>
+    <text x="350" y="59" fill="#e7e9f5" font-size="10" text-anchor="middle">console</text>
+  </svg>`,
+  comparison: "Without `__str__`, printing an object shows something like `<__main__.Point object at 0x...>` — useless for humans. Defining it gives you full control over the readable representation, similar to `toString()` in other languages.",
+  exercise: "Add `__len__` to a `Playlist` class so `len(my_playlist)` returns the number of songs, and `__getitem__` so `my_playlist[0]` returns the first song.",
+  misconception: "Misconception: \"You must implement every dunder method for a class to work.\" In reality, you only implement the ones relevant to how you want your object to behave (printing, comparing, adding, iterating) — most classes only need a handful.",
+  takeaways: ["Dunder methods hook your class into Python's built-in syntax.", "`__str__` controls human-readable printing.", "`__eq__` controls `==` comparisons between instances.", "Composition + dunder methods + inheritance together enable expressive, idiomatic OOP design."],
+  quiz: [
+    {q:"What does `__str__` control?", opts:["How the object is deleted","How the object is printed/displayed as text","How memory is allocated","How loops behave"], correct:1, explain:"`__str__` returns the human-readable string used by `print()` and `str()`."},
+    {q:"Which dunder method lets you use `==` on custom objects?", opts:["__init__","__eq__","__str__","__add__"], correct:1, explain:"`__eq__` defines what equality comparison means for your class."},
+    {q:"What happens without a custom `__str__`?", opts:["A syntax error","Python refuses to print the object","A default, not-very-readable representation is shown","The program crashes"], correct:2, explain:"Python falls back to a generic representation like `<ClassName object at 0x...>`."},
+    {q:"What is the benefit of composition + dunder methods together?", opts:["Faster CPU execution","Expressive, idiomatic objects that behave like built-ins","Automatic bug fixing","Removing the need for classes"], correct:1, explain:"Combining these techniques lets custom objects feel natural and integrate smoothly with Python syntax."}
+  ]
+}
+];
+
+function renderModules(){
+  const root = document.getElementById('modulesRoot');
+  const nav = document.getElementById('navdots');
+  nav.innerHTML = '';
+  MODULES.forEach((m,i)=>{
+    const dot = document.createElement('div');
+    dot.className = 'navdot' + (i+1>unlocked ? ' locked':'');
+    dot.textContent = 'Module ' + (i+1);
+    dot.onclick = ()=>{ if(i+1<=unlocked) showModule(i+1); };
+    nav.appendChild(dot);
+
+    const sec = document.createElement('div');
+    sec.className = 'module';
+    sec.id = 'mod'+(i+1);
+    sec.innerHTML = `
+      <div class="card">
+        <h2>${m.title}</h2>
+        <p>${m.explanation}</p>
+        <h3>Example</h3>
+        <pre>${m.example}</pre>
+        <h3>Analogy</h3>
+        <div class="analogy">${m.analogy}</div>
+        <h3>Diagram</h3>
+        <div class="diagram">${m.diagram}</div>
+        <h3>Comparison</h3>
+        <p>${m.comparison}</p>
+        <h3>Practical Exercise</h3>
+        <div class="exercise">
+          <p>${m.exercise}</p>
+          <textarea class="exans" placeholder="Write your solution here (self-check, no auto-grading)..."></textarea>
+        </div>
+        <h3>Common Misconception</h3>
+        <div class="misconception">${m.misconception}</div>
+        <h3>Key Takeaways</h3>
+        <ul class="takeaways">${m.takeaways.map(t=>`<li>${t}</li>`).join('')}</ul>
+      </div>
+      <div class="card">
+        <h2>Module ${i+1} Quiz</h2>
+        <div id="quiz${i+1}"></div>
+        <div class="quiz-result" id="result${i+1}" style="display:none"></div>
+      </div>
+    `;
+    root.appendChild(sec);
+    renderQuiz(i+1, m.quiz);
+  });
+  showModule(1);
+}
+
+function renderQuiz(modNum, questions){
+  const container = document.getElementById('quiz'+modNum);
+  let answered = new Array(questions.length).fill(false);
+  let correctCount = 0;
+
+  questions.forEach((q, qi)=>{
+    const qDiv = document.createElement('div');
+    qDiv.className = 'quiz-q';
+    qDiv.innerHTML = `<p><b>Q${qi+1}.</b> ${q.q}</p><div class="quiz-opts"></div><div class="quiz-explain"></div>`;
+    const optsDiv = qDiv.querySelector('.quiz-opts');
+    const explainDiv = qDiv.querySelector('.quiz-explain');
+    q.opts.forEach((opt, oi)=>{
+      const optEl = document.createElement('div');
+      optEl.textContent = opt;
+      optEl.onclick = ()=>{
+        if(answered[qi]) return;
+        answered[qi] = true;
+        Array.from(optsDiv.children).forEach((c,ci)=>{
+          if(ci===q.correct) c.classList.add('correct');
+          else if(ci===oi) c.classList.add('incorrect');
+        });
+        if(oi===q.correct) correctCount++;
+        explainDiv.style.display='block';
+        explainDiv.textContent = q.explain;
+        if(answered.every(Boolean)){
+          finishQuiz(modNum, correctCount, questions.length);
+        }
+      };
+      optsDiv.appendChild(optEl);
+    });
+    container.appendChild(qDiv);
+  });
+}
+
+function finishQuiz(modNum, correct, total){
+  scores[modNum] = correct;
+  const resultEl = document.getElementById('result'+modNum);
+  resultEl.style.display='block';
+  const pass = correct >= 3;
+  resultEl.innerHTML = `<b>Score: ${correct}/${total} mastery points.</b> ${pass ? 'Great work — next module unlocked!' : 'Review the module above and try to internalize the misconception section before continuing.'}`;
+  if(pass && modNum === unlocked && unlocked < TOTAL_MODULES){
+    unlocked++;
+  }
+  updateProgress();
+  renderModules_navOnly();
+}
+
+function renderModules_navOnly(){
+  const dots = document.querySelectorAll('.navdot');
+  dots.forEach((d,i)=>{ d.classList.toggle('locked', i+1>unlocked); });
+  if(unlocked===TOTAL_MODULES && Object.values(scores).filter(s=>s>=3).length===TOTAL_MODULES){
+    document.getElementById('finalCard').style.display='block';
+  }
+}
+
+function updateProgress(){
+  const total = Object.values(scores).reduce((a,b)=>a+b,0);
+  document.getElementById('rewardStat').textContent = total + ' / 16';
+  document.getElementById('overallProgress').style.width = Math.round((total/16)*100) + '%';
+}
+
+function showModule(n){
+  document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+  document.getElementById('mod'+n).classList.add('active');
+  document.querySelectorAll('.navdot').forEach((d,i)=>d.classList.toggle('active', i+1===n));
+  window.scrollTo({top: document.getElementById('navdots').offsetTop - 20, behavior:'smooth'});
+}
+
+document.getElementById('beginBtn').onclick = ()=>{
+  document.getElementById('navdots').style.display='flex';
+  renderModules();
+};
+
+document.getElementById('printBtn').onclick = ()=> window.print();
+</script>
+</body>
+</html>
