@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import uuid
+import json
 import pandas as pd
 
 API_URL = "http://127.0.0.1:8000"
@@ -45,17 +46,41 @@ if user_input:
     with st.chat_message("assistant"):
         placeholder = st.empty()
         placeholder.write("Thinking...")
+        full_text = ""
         try:
             payload = {
                 "session_id": st.session_state.session_id,
                 "member_id": st.session_state.member_id,
                 "message": "[" + selected_plan + "] " + user_input,
             }
-            resp = requests.post(API_URL + "/chat", json=payload, timeout=30)
-            resp.raise_for_status()
-            data = resp.json()
-            answer = data.get("response", "No response from backend.")
+            with requests.post(API_URL + "/chat", json=payload, stream=True, timeout=30) as resp:
+                resp.raise_for_status()
+                first_token_received = False
+                for line in resp.iter_lines(decode_unicode=True):
+                    if not line or not line.startswith("data:"):
+                        continue
+                    raw = line[len("data:"):].strip()
+                    try:
+                        event = json.loads(raw)
+                    except json.JSONDecodeError:
+                        continue
+                    if "error" in event:
+                        full_text = "Error from backend: " + event["error"]
+                        placeholder.write(full_text)
+                        break
+                    if event.get("done"):
+                        break
+                    token = event.get("token", "")
+                    full_text += token
+                    first_token_received = True
+                    placeholder.write(full_text)
+                if not first_token_received and not full_text:
+                    full_text = "No response received before stream ended."
+                    placeholder.write(full_text)
+        except requests.exceptions.Timeout:
+            full_text = "Error: request timed out waiting for the backend to respond."
+            placeholder.write(full_text)
         except requests.exceptions.RequestException as e:
-            answer = "Error reaching chatbot backend: " + str(e)
-        placeholder.write(answer)
-        st.session_state.messages.append({"role": "assistant", "content": answer})
+            full_text = "Error reaching chatbot backend: " + str(e)
+            placeholder.write(full_text)
+        st.session_state.messages.append({"role": "assistant", "content": full_text})
