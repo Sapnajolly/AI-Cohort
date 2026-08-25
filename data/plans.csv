@@ -1,0 +1,5 @@
+plan_id,plan_name,tier,monthly_premium
+P100,Bronze Basic,Bronze,250
+P200,Silver Standard,Silver,400
+P300,Gold Complete,Gold,600
+P400,Platinum Plus,Platinum,850
