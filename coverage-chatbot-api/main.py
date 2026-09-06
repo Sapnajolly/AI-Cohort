@@ -6,6 +6,18 @@ from collections import defaultdict, deque
 
 from token_utils import count_tokens, estimate_cost
 
+# --- Day 30: Langfuse tracing ---
+# Reads LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY / LANGFUSE_HOST from the
+# environment (injected via env_file / k8s Secret — never hardcoded). If
+# the keys aren't set (e.g. running a quick local test), tracing degrades
+# to a no-op instead of crashing the app.
+try:
+    from langfuse import Langfuse
+
+    _langfuse = Langfuse() if os.environ.get("LANGFUSE_PUBLIC_KEY") else None
+except Exception:
+    _langfuse = None
+
 app = FastAPI(title="Coverage Chatbot API")
 
 
@@ -214,6 +226,7 @@ async def chat(request: ChatRequest):
 
     def event_stream():
         full_response = ""
+        error_text = None
         try:
             for token in generate_llm_tokens(request.message, context):
                 full_response += token
@@ -221,8 +234,10 @@ async def chat(request: ChatRequest):
                 data = {"session_id": session_id, "token": token, "elapsed_ms": elapsed_ms}
                 yield f"data: {json.dumps(data)}\n\n"
         except Exception as e:
-            error_payload = {"session_id": session_id, "error": f"LLM error: {str(e)}"}
+            error_text = str(e)
+            error_payload = {"session_id": session_id, "error": f"LLM error: {error_text}"}
             yield f"data: {json.dumps(error_payload)}\n\n"
+            _trace_to_langfuse(session_id, member_id, request.message, "", prompt_tokens, 0, start, error=error_text)
             return
         save_turn(session_id, "assistant", full_response.strip())
         summarize_if_needed(session_id)
@@ -232,9 +247,50 @@ async def chat(request: ChatRequest):
         log_token_usage(session_id, member_id, prompt_tokens, completion_tokens)
         cache_set(request.message, full_response.strip())
 
+        # --- Day 30: Langfuse trace — latency, tokens, full prompt/response ---
+        _trace_to_langfuse(
+            session_id, member_id, request.message, full_response.strip(),
+            prompt_tokens, completion_tokens, start,
+        )
+
         yield f"data: {json.dumps({'session_id': session_id, 'done': True})}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+def _trace_to_langfuse(
+    session_id: str,
+    member_id: str,
+    prompt: str,
+    response: str,
+    prompt_tokens: int,
+    completion_tokens: int,
+    start_time: float,
+    error: str = None,
+):
+    """Day 30: log one /chat call to Langfuse — latency, token counts, and
+    the full prompt/response pair — so it shows up in the dashboard trace
+    view. No-ops silently if Langfuse isn't configured (see _langfuse above)."""
+    if _langfuse is None:
+        return
+    latency_ms = (time.time() - start_time) * 1000
+    try:
+        _langfuse.trace(
+            name="coverage-chatbot-chat",
+            session_id=session_id,
+            user_id=member_id,
+            input=prompt,
+            output=response if not error else None,
+            metadata={
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "latency_ms": round(latency_ms, 1),
+                "error": error,
+            },
+        )
+    except Exception as e:
+        # Tracing must never break the actual chat response.
+        print(f"[LANGFUSE] failed to log trace: {e}")
 
 
 @app.get("/history/{session_id}")
