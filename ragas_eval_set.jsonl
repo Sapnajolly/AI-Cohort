@@ -1,0 +1,20 @@
+{"question": "What is the deductible for the Silver plan (silver_001)?", "ground_truth": "The Silver plan (silver_001) has an annual deductible of $1,500."}
+{"question": "What is the monthly premium for the Gold plan (gold_001)?", "ground_truth": "The Gold plan (gold_001) has a monthly premium of $520."}
+{"question": "Is physical therapy covered under the Silver plan?", "ground_truth": "Yes, physical therapy is covered under the Silver plan, with a $40 copay, subject to prior authorization and a 30 visits/year limit."}
+{"question": "Is physical therapy covered under the Gold plan?", "ground_truth": "Yes, physical therapy is covered under the Gold plan, with a $20 copay, no prior authorization required, and unlimited visits."}
+{"question": "Is chiropractic care covered under the Silver plan?", "ground_truth": "Yes, chiropractic care is covered under the Silver plan, with a $50 copay and a 20 visits/year limit. No prior authorization is required."}
+{"question": "Is mental health treatment covered under the Silver plan?", "ground_truth": "Yes, mental health treatment is covered under the Silver plan at parity with medical benefits, with a $50 copay and no prior authorization required."}
+{"question": "What is the out-of-pocket maximum for the Silver plan?", "ground_truth": "The out-of-pocket maximum for the Silver plan is $7,000."}
+{"question": "What is the out-of-pocket maximum for the Gold plan?", "ground_truth": "The out-of-pocket maximum for the Gold plan is $4,000."}
+{"question": "What is the status of claim CLM-2024-0892?", "ground_truth": "Claim CLM-2024-0892 was Approved. Of the $450.00 billed, $360.00 was approved, processed on 2024-11-20."}
+{"question": "What is the status of claim CLM-2024-1001?", "ground_truth": "Claim CLM-2024-1001 is currently Pending, with $1,200.00 billed and under review."}
+{"question": "How much did claim CLM-2024-0892 get approved for?", "ground_truth": "$360.00 was approved out of the $450.00 billed for claim CLM-2024-0892."}
+{"question": "What plan type is silver_001?", "ground_truth": "silver_001 is the Silver Select plan, a Silver-tier plan."}
+{"question": "What plan type is gold_001?", "ground_truth": "gold_001 is the Gold Plus plan, a Gold-tier plan."}
+{"question": "Does physical therapy require prior authorization under the Silver plan?", "ground_truth": "Yes, physical therapy requires prior authorization under the Silver plan."}
+{"question": "Does physical therapy require prior authorization under the Gold plan?", "ground_truth": "No, physical therapy does not require prior authorization under the Gold plan."}
+{"question": "How many physical therapy visits per year does the Silver plan allow?", "ground_truth": "The Silver plan allows up to 30 physical therapy visits per year."}
+{"question": "How many chiropractic visits per year does the Silver plan allow?", "ground_truth": "The Silver plan allows up to 20 chiropractic visits per year."}
+{"question": "What is the copay for mental health treatment under the Silver plan?", "ground_truth": "The copay for mental health treatment under the Silver plan is $50."}
+{"question": "Which plan has the lower monthly premium, Silver or Gold?", "ground_truth": "The Silver plan has the lower monthly premium at $320/month, compared to $520/month for the Gold plan."}
+{"question": "Which plan has the lower deductible, Silver or Gold?", "ground_truth": "The Gold plan has the lower deductible at $500, compared to $1,500 for the Silver plan."}
