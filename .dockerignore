@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env
+*.md
+__pycache__/
+*.pyc
+.venv/
+venv/
+.vscode/
+.idea/
+*.jsonl
+fine_tune_*.jsonl
+embeddings.npy
+embeddings_2d.png
+chroma_data/
+.pytest_cache/

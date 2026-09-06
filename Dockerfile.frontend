@@ -1,0 +1,37 @@
+# Day 28: Streamlit frontend container. Multi-stage so build tools (if any
+# wheels need compiling) don't bloat the final runtime image.
+
+FROM python:3.11-slim AS builder
+
+WORKDIR /build
+
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# The frontend only needs streamlit/requests/pandas — kept separate from
+# the backend's requirements.txt since they're different services.
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir streamlit==1.37.0 requests==2.32.3 pandas==2.2.2
+
+FROM python:3.11-slim AS final
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY app.py ./app.py
+COPY response_cards.py ./response_cards.py
+COPY data/ ./data/
+
+EXPOSE 8501
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8501/_stcore/health || exit 1
+
+CMD ["streamlit", "run", "app.py", "--server.address=0.0.0.0", "--server.port=8501"]
