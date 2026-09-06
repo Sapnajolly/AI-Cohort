@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: coverage-chatbot-backend
+  labels:
+    app: coverage-chatbot-backend
+spec:
+  type: ClusterIP  # internal only — the frontend reaches it by service name; not exposed outside the cluster
+  selector:
+    app: coverage-chatbot-backend
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000

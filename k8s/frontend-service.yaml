@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: coverage-chatbot-frontend
+  labels:
+    app: coverage-chatbot-frontend
+spec:
+  type: NodePort  # exposed so `minikube service` can open it from the host browser
+  selector:
+    app: coverage-chatbot-frontend
+  ports:
+    - name: http
+      port: 8501
+      targetPort: 8501
+      nodePort: 30851

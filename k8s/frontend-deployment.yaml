@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coverage-chatbot-frontend
+  labels:
+    app: coverage-chatbot-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: coverage-chatbot-frontend
+  template:
+    metadata:
+      labels:
+        app: coverage-chatbot-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: coverage-chatbot-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8501
+          env:
+            # Reach the backend by its in-cluster Service DNS name, not localhost.
+            - name: API_URL
+              value: "http://coverage-chatbot-backend:8000"
+          envFrom:
+            - secretRef:
+                name: coverage-chatbot-secrets
+          readinessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: 8501
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: 8501
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
