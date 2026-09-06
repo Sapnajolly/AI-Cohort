@@ -8,6 +8,12 @@ from token_utils import count_tokens, estimate_cost
 
 app = FastAPI(title="Coverage Chatbot API")
 
+
+@app.get("/health")
+async def health():
+    """Day 28: container health probe target."""
+    return {"status": "ok"}
+
 DB_PATH = os.path.join(os.path.dirname(__file__), "..", "coverage.db")
 MAX_HISTORY_TOKENS = 2000
 RECENT_TURNS = 6
